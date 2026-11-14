@@ -200,6 +200,33 @@ struct CaptureScreen: View {
 
   private var betweenRooms: some View {
     panel {
+      ScrollView {
+        betweenRoomSettings
+      }
+      .scrollDismissesKeyboard(.interactively)
+      Button {
+        nameFocused = false
+        controller.startRoom()
+      } label: {
+        Label(controller.canStartRoom ? "Scan \(controller.roomName)" : "Name the room to start", systemImage: "viewfinder")
+          .frame(maxWidth: .infinity)
+      }
+      .buttonStyle(.borderedProminent)
+      .controlSize(.large)
+      .disabled(!controller.canStartRoom)
+      if !controller.rooms.isEmpty {
+        HStack {
+          Button("Redo last room", role: .destructive, action: controller.discardLastRoom)
+          Spacer()
+          Button("Finish session") { Task { await controller.finishSession() } }
+            .buttonStyle(.bordered)
+        }
+      }
+    }
+  }
+
+  private var betweenRoomSettings: some View {
+    VStack(alignment: .leading, spacing: 12) {
       if controller.rooms.isEmpty {
         if controller.alignment.method == "relocalized" {
           Text("You're lined up with \(controller.zoneName). The faint green is what you scanned before\(controller.priorPhotoCount > 0 ? "; surfaces its \(controller.priorPhotoCount) photos already cover start out green" : ""). Scan a new room, or rescan one to replace it.")
@@ -271,23 +298,6 @@ struct CaptureScreen: View {
         .font(.subheadline)
       Text("Regular photos use camera frames for a lighter scan. High-resolution photos add processing and are limited to one request every 3 seconds while the phone is cool. The shutter always saves a regular photo.")
         .font(.caption).foregroundStyle(.secondary)
-      Button {
-        controller.startRoom()
-      } label: {
-        Label(controller.canStartRoom ? "Scan \(controller.roomName)" : "Name the room to start", systemImage: "viewfinder")
-          .frame(maxWidth: .infinity)
-      }
-      .buttonStyle(.borderedProminent)
-      .controlSize(.large)
-      .disabled(!controller.canStartRoom)
-      if !controller.rooms.isEmpty {
-        HStack {
-          Button("Redo last room", role: .destructive, action: controller.discardLastRoom)
-          Spacer()
-          Button("Finish session") { Task { await controller.finishSession() } }
-            .buttonStyle(.bordered)
-        }
-      }
     }
   }
 

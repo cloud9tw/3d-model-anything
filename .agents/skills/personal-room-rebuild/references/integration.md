@@ -13,8 +13,9 @@ merge sessions, modify images or change camera poses. Pillow is required.
 - `layout.status`: `measured` means syntactically valid reported wall measurements;
   it does not prove their real-world accuracy. `unmeasured` or `invalid` must not
   become a fabricated room outline.
-- `selected[].photoIndex`: original index in `photos/photos.json`. Keep this for
-  matched-camera comparisons. `selectionRank` is only selection order.
+- `selected[].photoIndex`: original index in the source photo metadata, retained
+  for provenance. The viewer uses the converted array index; `selectionRank` is
+  only selection order.
 - Selected references retain raw sensor dimensions, intrinsics, camera-to-session
   transform, EXIF orientation, hashes and missing quality signals.
 - `excluded`: invalid metadata/files, duplicates, redundant viewpoints or the
@@ -26,6 +27,32 @@ Selection uses image contrast/exposure, motion-blur metadata, position and viewi
 direction. It cannot know which furniture matters or whether all room surfaces were
 seen. Visually inspect chosen references and deliberately supplement weakly covered
 objects. Twenty-four is a starting reference budget, not a fidelity requirement.
+
+## Convert selected cameras
+
+Only when `layout.status` is `measured`, convert with the evidence report:
+
+```sh
+python .agents/skills/scan-to-threejs/scripts/bundle_to_room.py \
+  data/captures-in/my-session --room 7 \
+  --evidence data/captures/my-session/evidence.json \
+  -o data/captures/my-session/room.json
+```
+
+This checks metadata, layout and selected-image hashes again and rejects stale
+evidence. It skips excluded rows and adds `sourcePhotoIndex` to each converted
+camera. Use the existing `prepare_photos.py` workflow with this `room.json`.
+For example, original indices `[1, 3]` become viewer indices `[0, 1]`; their upright
+reference files are `0000.jpg` and `0001.jpg`. Pass `0`/`1` to `cmp_photo.sh`.
+Inspect the mapping with:
+
+```sh
+python -c 'import json; r=json.load(open("data/captures/my-session/room.json")); print([(i,p["sourcePhotoIndex"],p["file"]) for i,p in enumerate(r["photos"])])'
+```
+
+Do not run the default unfiltered converter after assessing invalid photos, or
+pass original indices directly to the viewer. A missing wall layout remains an
+explicitly unmeasured partial reconstruction.
 
 ## Running img2threejs
 

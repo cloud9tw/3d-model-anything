@@ -33,13 +33,13 @@
 
 **Interfaces:** `CaptureScope` (`area`, `room`); `CaptureQuality(..., scope:)`; `AutomaticPhotoBudget` with `reserve()`, `complete(saved:)`, `canReserve`, `saved`, `pending`. The controller owns one budget per room; reserve at final save admission and release after JPEG completion.
 
-- [ ] Write a failing Swift partial-area quality regression against current code; run on a macOS Actions runner.
-- [ ] Add quota tests (60 accepted, 61st rejected; pending reservation; failed write retry; reset; zero/negative limits).
-- [ ] Implement policies and wire capture gating at candidate collection, commit and save, leaving manual admission independent.
-- [ ] Add pre-scan scope/limit controls, fixed save action, separate photo coverage and quota labels, and actual save-stage status.
-- [ ] Store optional capture scope and photo limit in room metadata; preserve legacy decoding.
-- [ ] Run policy tests, unsigned simulator build, and existing simulator self-tests where supported.
-- [ ] Commit the capture change.
+- [x] Write a failing Swift partial-area quality regression against current code; run on a macOS Actions runner.
+- [x] Add quota tests (60 accepted, 61st rejected; pending reservation; failed write retry; reset; zero/negative limits).
+- [x] Implement policies and wire capture gating at candidate collection, commit and save, leaving manual admission independent.
+- [x] Add pre-scan scope/limit controls, fixed save action, separate photo coverage and quota labels, and actual save-stage status.
+- [x] Store optional capture scope and photo limit in room metadata; preserve legacy decoding.
+- [x] Run policy tests, unsigned simulator build, and existing simulator self-tests where supported.
+- [x] Commit the capture change.
 
 ### Task 2: Read-only reconstruction evidence assessment
 
@@ -47,10 +47,10 @@
 
 **Interfaces:** `assess_bundle(bundle: Path, room: int, max_photos: int = 24) -> dict`; CLI `assess_capture.py BUNDLE --room N --max-photos N --out REPORT`. Explicit room/session selection, no ZIP extraction or multi-session merging. Report includes source hashes, layout status, alignment scope, selected references, exclusions with reasons, and diagnostics.
 
-- [ ] Write tests for invalid/missing poses, unsafe paths, duplicate/blurred photos, diverse selection, nonzero room indices, no-layout partials, and unchanged inputs.
-- [ ] Observe failing tests, then implement image/metadata validation and deterministic spatial/view selection with Pillow.
-- [ ] Report missing quality signals as unknown; retain original row indices for camera comparisons; write no images or modified metadata.
-- [ ] Run all importer tests; commit.
+- [x] Write tests for invalid/missing poses, unsafe paths, duplicate/blurred photos, diverse selection, nonzero room indices, no-layout partials, and unchanged inputs.
+- [x] Observe failing tests, then implement image/metadata validation and deterministic spatial/view selection with Pillow.
+- [x] Report missing quality signals as unknown; retain original row indices for provenance and map them to converted viewer indices; write no images or modified metadata.
+- [x] Run all importer tests; commit.
 
 ### Task 3: Usable skill bridge and Mac handoff
 
@@ -58,15 +58,15 @@
 
 **Interfaces:** Bridge consumes Task 2 report and the real installed img2threejs skill. Each admitted object gets its own state/spec; no fabricated success or visual scores. Output remains an existing viewer RoomModule.
 
-- [ ] Read skill-creator and img2threejs public contracts before writing bridge instructions.
-- [ ] Connect assessment → structural baseline → selected object references → img2threejs gates → coordinate adaptation → matched-camera comparison.
-- [ ] Document installation on Mac for Codex, branch checkout, Xcode signing, partial export recovery, and evidence requirements.
-- [ ] Validate skill metadata and exercise the assessor against synthetic fixtures; do not claim a reconstructed room without user inputs.
-- [ ] Commit.
+- [x] Read skill-creator and img2threejs public contracts before writing bridge instructions.
+- [x] Connect assessment → structural baseline → selected object references → img2threejs gates → coordinate adaptation → matched-camera comparison.
+- [x] Document installation on Mac for Codex, branch checkout, Xcode signing, partial export recovery, and evidence requirements.
+- [x] Validate skill metadata and exercise the assessor against synthetic fixtures; do not claim a reconstructed room without user inputs.
+- [x] Commit.
 
 ### Task 4: Review and publish a reviewable branch
 
-- [ ] Run complete Python suite, viewer build, public-boundary check on canonical LF files, macOS Swift policies and simulator build.
-- [ ] Request one fresh whole-branch review; fix actionable issues with regression coverage.
+- [x] Run complete Python suite, viewer build, public-boundary check on canonical LF files, macOS Swift policies and simulator build.
+- [x] Request one fresh whole-branch review; fix actionable issues with regression coverage.
 - [ ] Push branch to user's fork, create/attach a draft PR, verify remote head and CI outcomes.
 - [ ] Report concrete changes, checks, Mac checkout instructions, and missing physical-device evidence.

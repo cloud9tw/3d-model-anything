@@ -174,6 +174,37 @@ class AssessmentTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(out.read_bytes(), before)
 
+    def test_converted_cameras_keep_source_mapping_and_exclude_bad_rows(self):
+        self.write('rooms/room-7.json', {'walls': [
+            {'identifier': 'wall', 'confidence': {'high': {}},
+             'transform': matrix(), 'dimensions': [3, 2.5, 0]}], 'objects': []})
+        self.photo(0, room=0)
+        self.photo(1, x=0)
+        self.photo(2, x=1, transform=[float('nan')] * 16)
+        self.photo(3, x=2)
+        report = self.assess()
+        evidence = self.base / 'evidence.json'
+        evidence.write_text(json.dumps(report), encoding='utf-8')
+        converted = self.base / 'converted.json'
+        cmd = [sys.executable, '-X', 'utf8', str(Path(__file__).with_name('bundle_to_room.py')),
+               str(self.root), '--room', '7', '--evidence', str(evidence), '-o', str(converted)]
+        result = subprocess.run(cmd, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        photos = json.loads(converted.read_text(encoding='utf-8'))['photos']
+        self.assertEqual([p['sourcePhotoIndex'] for p in photos], [1, 3])
+        self.assertEqual([p['file'] for p in photos], ['photos/0001.jpg', 'photos/0003.jpg'])
+        from prepare_photos import prepare
+        self.assertEqual(prepare(self.root, converted, self.base / 'upright'), 2)
+        self.assertTrue((self.base / 'upright/0000.jpg').is_file())
+        self.assertTrue((self.base / 'upright/0001.jpg').is_file())
+        # A stale assessment must never authorize changed metadata/images.
+        self.rows[1]['transform'] = matrix(99)
+        self.flush()
+        stale = self.base / 'stale.json'
+        result = subprocess.run(cmd[:-1] + [str(stale)], capture_output=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(stale.exists())
+
 
 if __name__ == '__main__':
     unittest.main()

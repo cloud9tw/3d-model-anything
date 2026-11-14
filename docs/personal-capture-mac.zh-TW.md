@@ -95,6 +95,19 @@ python .agents/skills/scan-to-threejs/scripts/assess_capture.py \
 表示目前沒有可接受的帶姿態參考照片；仍會保存報告供檢查。`partial` 表示
 部分輸入無效或缺少可用房間量測；不是資料遺失，也不是重建已成功。
 
+有有效牆面量測時，以報告篩選後的照片轉換相機：
+
+```sh
+python .agents/skills/scan-to-threejs/scripts/bundle_to_room.py \
+  data/captures-in/my-session --room 7 \
+  --evidence data/captures/my-session/evidence.json \
+  -o data/captures/my-session/room.json
+```
+
+轉換後相機重新由 0 編號，`sourcePhotoIndex` 保留原始照片編號。比對畫面使用
+轉換後的編號；不要直接使用報告的原始編號。工具會拒絕資料已變動的舊報告。
+沒有有效牆面時跳過此步，先做明確標示為未量測的局部模型。
+
 將這段交給 Mac 上的 Codex：
 
 > 使用 $personal-room-rebuild，讀取 data/captures/my-session/evidence.json 與原始匯出包。

@@ -264,6 +264,40 @@ def assess_bundle(bundle: Path, room: int, max_photos: int = 24) -> dict:
                             'Use original sensor pixels with intrinsics; EXIF is for display only.']}
 
 
+def selected_source_rows(bundle, room, evidence):
+    """Revalidate a report before converting its compact viewer camera array."""
+    root = Path(bundle).resolve()
+    report = json.loads(Path(evidence).read_text(encoding='utf-8-sig'))
+    if report.get('format') != 'personal-room-evidence/1' or report.get('room') != room:
+        raise ValueError('evidence format or room does not match')
+    for relative, expected in [('manifest.json', report.get('manifestSha256')),
+                               (report.get('photoIndexFile'), report.get('photoIndexSha256'))]:
+        if digest(source_path(root, relative)) != expected:
+            raise ValueError('source metadata changed; assess the capture again')
+    layout = report.get('layout', {})
+    if (layout.get('status') != 'measured' or layout.get('file') != f'rooms/room-{room}.json'
+            or digest(source_path(root, layout['file'])) != layout.get('sha256')):
+        raise ValueError('conversion requires the unchanged measured room layout')
+    rows = read_json(root, report['photoIndexFile'])
+    selected = report.get('selected')
+    if not isinstance(selected, list) or not selected:
+        raise ValueError('evidence contains no selected photos')
+    result, seen = [], set()
+    for reference in selected:
+        index = reference.get('photoIndex')
+        if type(index) is not int or not 0 <= index < len(rows) or index in seen:
+            raise ValueError('invalid or duplicate source photo index')
+        seen.add(index)
+        row = rows[index]
+        if row.get('room') != room or row.get('file') != reference.get('file'):
+            raise ValueError('source photo does not match the selected room/reference')
+        checked = photo_evidence(root, row, index)
+        if checked['sha256'] != reference.get('sha256'):
+            raise ValueError('source image changed; assess the capture again')
+        result.append((index, row))
+    return sorted(result)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('bundle', type=Path)

@@ -64,8 +64,14 @@ to rebuild a room does not authorize unrelated plugins, APIs or publishing photo
 
 ## Review and deliver
 
-Use the companion viewer's matched-camera tooling with **original photo array
-indices**, not selection ranks. Sensor pixels and intrinsics stay paired; EXIF
+For a measured room, run `bundle_to_room.py BUNDLE --room N --evidence REPORT -o
+OUTPUT` to include only selected references, then use `prepare_photos.py`. Keep
+outputs outside the source bundle. Read the exact commands and index mapping in
+[integration.md](references/integration.md).
+
+Use the companion viewer's matched-camera tooling with **converted photo array
+indices**. Each converted photo's `sourcePhotoIndex` preserves the original evidence
+index; neither that source index nor `selectionRank` is a viewer index. Sensor pixels and intrinsics stay paired; EXIF
 rotation for viewing must not silently change projection coordinates. For cropped
 object references, keep a separate crop camera; a crop is not the full-room camera.
 
