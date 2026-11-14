@@ -41,10 +41,21 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('bundle')
     ap.add_argument('--room', type=int, default=None, help='room index (default: structure.json, all rooms)')
+    ap.add_argument('--evidence', help='assessment report: convert only its validated selected photos (requires --room)')
     ap.add_argument('-o', default=None)
     ap.add_argument('--plan', default=None)
     ap.add_argument('--turn', type=int, default=0, help='extra quarter turns (90° each, counter-clockwise seen from above) to match another scan')
     a = ap.parse_args()
+
+    selected_rows = None
+    if a.evidence:
+        if a.room is None:
+            ap.error('--evidence requires --room')
+        from assess_capture import selected_source_rows
+        try:
+            selected_rows = selected_source_rows(a.bundle, a.room, a.evidence)
+        except (ValueError, OSError, TypeError, KeyError, AttributeError) as error:
+            ap.error(str(error))
 
     src = os.path.join(a.bundle, 'structure.json' if a.room is None else f'rooms/room-{a.room}.json')
     S = json.load(open(src))
@@ -168,7 +179,8 @@ def main():
     # --- photos (upright framing: image up = sensor -x, right = sensor +y) -----------
     photos = []
     pj = os.path.join(a.bundle, 'photos/photos.json')
-    for p in (json.load(open(pj)) if os.path.exists(pj) else []):
+    photo_rows = selected_rows if selected_rows is not None else enumerate(json.load(open(pj)) if os.path.exists(pj) else [])
+    for source_index, p in photo_rows:
         if a.room is not None and p['room'] != a.room:
             continue
         pm = mat(p['transform'])
@@ -179,6 +191,7 @@ def main():
         # upright image is height=sensor width; vertical fov spans the sensor's x axis
         fovY = math.degrees(2 * math.atan(p['width'] / 2 / fx))
         photos.append({
+            'sourcePhotoIndex': source_index,
             'file': p['file'], 'position': [round(v, 4) for v in pos], 'forward': [round(v, 5) for v in fwd],
             'up': [round(v, 5) for v in up], 'fovY': round(fovY, 3), 'aspect': round(p['height'] / p['width'], 5),
             'blurPixels': p.get('blurPixels'),

@@ -401,6 +401,10 @@ struct RoomRecord: Codable, Identifiable {
   }
   var detailSeconds: TimeInterval?
   var detailPhotos: Int?
+  /// Optional self-use capture settings; absent in older house-capture/5 bundles.
+  var captureScope: String?
+  var automaticPhotoLimit: Int?
+  var automaticPhotos: Int?
   /// house-capture/5: RoomPlan's raw CapturedRoomData ("rooms/room-N-data.json")
   var data: String?
   var id: Int { index }

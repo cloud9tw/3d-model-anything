@@ -1,0 +1,4 @@
+interface:
+  display_name: "Personal Room Rebuild"
+  short_description: "Rebuild measured rooms with photo-guided objects"
+  default_prompt: "Use $personal-room-rebuild to assess my room export and combine its measured layout with img2threejs object reconstruction."

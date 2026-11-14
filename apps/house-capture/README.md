@@ -1,4 +1,4 @@
-# 3D Model Anything
+# 3D Model test
 
 iPhone app that scans a whole house, over as many days as you like, into bundles the three.js
 rebuild pipeline (`scan-to-threejs` skill) can use directly. Per room it records, on one ARSession:
@@ -34,7 +34,7 @@ Every finished room is written to house.json and the bundle right away and the m
 after each room, so a crash costs at most the room in progress.
 
 **Sharing**: open a saved room → *Share room (.zip)* → AirDrop. This exports the active scan's layout, mesh, photos and depth, excluding other scans and session-wide structures/maps. Original room indices and poses are preserved; the saved mesh may include nearby surfaces from the same capture session. To share an older version, select *Use this scan* first. The house screen's *Share whole house* and each session's *Share* remain available.
-Everything is also in the Files app under 3D Model Anything.
+Everything is also in the Files app under 3D Model test.
 
 **Photo preview** maps cropped photo textures onto the mesh, preserving image detail between
 LiDAR vertices. It chooses sharp, unobstructed views and reuses photos from aligned earlier

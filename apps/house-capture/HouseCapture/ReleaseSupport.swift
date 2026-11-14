@@ -28,10 +28,10 @@ enum CaptureReadiness {
     case .authorized: break
     case .notDetermined:
       guard await AVCaptureDevice.requestAccess(for: .video) else {
-        throw CaptureReadinessError(message: "Camera access is off. Enable Camera for 3D Model Anything in Settings, then try scanning again.")
+        throw CaptureReadinessError(message: "Camera access is off. Enable Camera for 3D Model test in Settings, then try scanning again.")
       }
     case .denied:
-      throw CaptureReadinessError(message: "Camera access is off. Enable Camera for 3D Model Anything in Settings, then try scanning again.")
+      throw CaptureReadinessError(message: "Camera access is off. Enable Camera for 3D Model test in Settings, then try scanning again.")
     case .restricted:
       throw CaptureReadinessError(message: "Camera access is restricted on this device. Check Screen Time or device-management restrictions. You can still import and view scans.")
     @unknown default:
@@ -87,7 +87,7 @@ struct AppHelpScreen: View {
   }
   var body: some View {
     List {
-      Section("3D Model Anything") {
+      Section("3D Model test") {
         NavigationLink("Scanning, importing & sharing") { HelpDocumentView(resource: "Support") }
         NavigationLink("Privacy policy") { HelpDocumentView(resource: "PrivacyPolicy") }
         if let url = publicURL("HouseCapturePrivacyURL") { Link("Privacy policy online", destination: url) }

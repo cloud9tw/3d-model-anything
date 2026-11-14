@@ -106,10 +106,10 @@ struct CaptureScreen: View {
           if scanning {
             VStack(spacing: 3) {
               CoverageRing(percent: controller.stats.percent).frame(width: 44, height: 44)
-              Text("Photo detail").font(.system(size: 9, weight: .semibold))
+              Text("Photo coverage").font(.system(size: 9, weight: .semibold))
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Photo detail, \(controller.stats.percent) percent of observed surfaces")
+            .accessibilityLabel("Photo coverage, \(controller.stats.percent) percent of observed surfaces. Not room completion.")
           }
           VStack(alignment: .trailing, spacing: 2) {
             if scanning {
@@ -182,7 +182,7 @@ struct CaptureScreen: View {
     case .scanning:
       if controller.paused { pausedPanel } else { scanControls }
     case .finishingRoom:
-      status("Saving \(controller.roomName)…")
+      status(controller.finishingStep.isEmpty ? "Saving \(controller.roomName)…" : controller.finishingStep)
     case .finishing:
       status(controller.finishingStep.isEmpty ? "Saving…" : controller.finishingStep)
     case .done:
@@ -200,12 +200,39 @@ struct CaptureScreen: View {
 
   private var betweenRooms: some View {
     panel {
+      ScrollView {
+        betweenRoomSettings
+      }
+      .scrollDismissesKeyboard(.interactively)
+      Button {
+        nameFocused = false
+        controller.startRoom()
+      } label: {
+        Label(controller.canStartRoom ? "Scan \(controller.roomName)" : "Name the room to start", systemImage: "viewfinder")
+          .frame(maxWidth: .infinity)
+      }
+      .buttonStyle(.borderedProminent)
+      .controlSize(.large)
+      .disabled(!controller.canStartRoom)
+      if !controller.rooms.isEmpty {
+        HStack {
+          Button("Redo last room", role: .destructive, action: controller.discardLastRoom)
+          Spacer()
+          Button("Finish session") { Task { await controller.finishSession() } }
+            .buttonStyle(.bordered)
+        }
+      }
+    }
+  }
+
+  private var betweenRoomSettings: some View {
+    VStack(alignment: .leading, spacing: 12) {
       if controller.rooms.isEmpty {
         if controller.alignment.method == "relocalized" {
           Text("You're lined up with \(controller.zoneName). The faint green is what you scanned before\(controller.priorPhotoCount > 0 ? "; surfaces its \(controller.priorPhotoCount) photos already cover start out green" : ""). Scan a new room, or rescan one to replace it.")
             .font(.subheadline)
         } else {
-          Text("Scan each room once: as you move, a triangle mesh appears. **Green** means good photo coverage, including aligned earlier scans. **Red** needs more photos. Areas without triangles still need scanning. The white outlines are the walls, doors and windows being measured. **Photo detail** measures photography on surfaces already seen by LiDAR; it is not the percentage of the room scanned. Save and review for missing areas.")
+          Text("Move slowly around the area you need, then save and review. Green and red indicate photo coverage of observed surfaces, not room completion. You can save at any percentage; no automatic completion is required.")
             .font(.subheadline)
         }
       } else {
@@ -259,27 +286,18 @@ struct CaptureScreen: View {
           .font(.caption2)
           .foregroundStyle(.secondary)
       }
+      Picker("Capture scope", selection: $controller.captureScope) {
+        ForEach(CaptureScope.allCases) { scope in Text(scope.label).tag(scope) }
+      }
+      .pickerStyle(.segmented)
+      Stepper("Automatic photos: up to \(controller.automaticPhotoLimit)", value: $controller.automaticPhotoLimit, in: 0...120, step: 20)
+        .font(.subheadline)
+      Text("The limit applies per room. At the limit, automatic photos stop; measurements continue and you can use the shutter to fill gaps. Zero means manual photos only.")
+        .font(.caption).foregroundStyle(.secondary)
       Toggle("High-resolution automatic photos", isOn: $controller.highResolutionPhotos)
         .font(.subheadline)
       Text("Regular photos use camera frames for a lighter scan. High-resolution photos add processing and are limited to one request every 3 seconds while the phone is cool. The shutter always saves a regular photo.")
         .font(.caption).foregroundStyle(.secondary)
-      Button {
-        controller.startRoom()
-      } label: {
-        Label(controller.canStartRoom ? "Scan \(controller.roomName)" : "Name the room to start", systemImage: "viewfinder")
-          .frame(maxWidth: .infinity)
-      }
-      .buttonStyle(.borderedProminent)
-      .controlSize(.large)
-      .disabled(!controller.canStartRoom)
-      if !controller.rooms.isEmpty {
-        HStack {
-          Button("Redo last room", role: .destructive, action: controller.discardLastRoom)
-          Spacer()
-          Button("Finish session") { Task { await controller.finishSession() } }
-            .buttonStyle(.bordered)
-        }
-      }
     }
   }
 
@@ -325,8 +343,15 @@ struct CaptureScreen: View {
 
   private var scanControls: some View {
     VStack(spacing: 10) {
+      Text("\(controller.captureScope.label) · \(controller.roomPhotoCount) photos saved")
+        .font(.caption.weight(.semibold)).foregroundStyle(.white)
+      Text("Auto photos: \(controller.automaticPhotos.saved)/\(controller.automaticPhotos.limit) · Coverage is not completion")
+        .font(.caption).foregroundStyle(.white)
+      if controller.automaticPhotos.saved >= controller.automaticPhotos.limit {
+        tip("Automatic photos stopped at your limit. Save now, or use the shutter for a missing view. Measurements continue.")
+      }
       if controller.captureReady {
-        tip(controller.quality.ready ? controller.quality.message : (controller.instruction ?? controller.quality.message))
+        tip(controller.captureScope == .area ? controller.quality.message : (controller.instruction ?? controller.quality.message))
         if controller.coveragePlateau && !controller.quality.ready {
           tip("Photo detail isn't improving much. You can save and review what you have; you don't need to keep circling.")
         }
@@ -339,9 +364,9 @@ struct CaptureScreen: View {
         }
         .buttonStyle(.bordered)
         shutter
-        Button(controller.quality.ready ? "Finish room ✓" : "Save room", action: controller.finishRoom)
+        Button("Save current capture", action: controller.finishRoom)
           .buttonStyle(.borderedProminent)
-          .tint(controller.quality.ready ? .green : .accentColor)
+          .tint(.accentColor)
           .controlSize(.large)
       }
     }

@@ -1,0 +1,47 @@
+name: Capture checks
+on:
+  push:
+    branches: [codex/personal-capture-img2threejs]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  policies:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and run capture policies
+        run: |
+          swiftc apps/house-capture/HouseCapture/CaptureQuality.swift apps/house-capture/tests/CapturePolicyTests.swift -o "$RUNNER_TEMP/capture-policies"
+          "$RUNNER_TEMP/capture-policies"
+  simulator:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          cd apps/house-capture
+          xcodegen generate
+      - name: Build unsigned simulator app
+        run: |
+          set -o pipefail
+          xcodebuild -project apps/house-capture/HouseCapture.xcodeproj -scheme HouseCapture -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/capture-build" CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/capture-build.log" 2>&1 || { tail -100 "$RUNNER_TEMP/capture-build.log"; exit 1; }
+      - name: Run existing app self-tests
+        run: |
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; print(next(d["udid"] for ds in json.load(sys.stdin)["devices"].values() for d in ds if d["name"].startswith("iPhone")))')
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" "$RUNNER_TEMP/capture-build/Build/Products/Debug-iphonesimulator/HouseCapture.app"
+          xcrun simctl launch --console --terminate-running-process "$DEVICE" com.wesbos.housecapture -selftest | tee "$RUNNER_TEMP/capture-selftest.log"
+          grep -q 'SELFTEST: PASS ' "$RUNNER_TEMP/capture-selftest.log"
+          if grep -q 'SELFTEST: FAIL' "$RUNNER_TEMP/capture-selftest.log"; then exit 1; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: capture-simulator-logs
+          path: |
+            ${{ runner.temp }}/capture-build.log
+            ${{ runner.temp }}/capture-selftest.log
