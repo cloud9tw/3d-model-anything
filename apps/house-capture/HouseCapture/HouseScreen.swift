@@ -41,7 +41,7 @@ struct HouseScreen: View {
     .foregroundStyle(Fieldwork.ink)
     .navigationTitle("")
     .toolbar {
-      ToolbarItem(placement: .principal) { FieldworkEyebrow(text: "3D Model Anything") }
+      ToolbarItem(placement: .principal) { FieldworkEyebrow(text: "3D Model test") }
       ToolbarItem(placement: .topBarTrailing) {
         if let house {
           Menu {

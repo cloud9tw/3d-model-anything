@@ -16,7 +16,7 @@
     },
     {
       "title": "Import a shared room",
-      "body": "Save a 3D Model Anything room or session ZIP to Files. Tap the ZIP in Files to extract it. In 3D Model Anything, tap the import icon at the top left and choose the extracted folder containing manifest.json. If Files created an extra outer folder, select the inner folder with that file. Whole-house folder import is not supported; share a room or session instead. Each import creates a new house and leaves the original folder unchanged."
+      "body": "Save a 3D Model test room or session ZIP to Files. Tap the ZIP in Files to extract it. In 3D Model test, tap the import icon at the top left and choose the extracted folder containing manifest.json. If Files created an extra outer folder, select the inner folder with that file. Whole-house folder import is not supported; share a room or session instead. Each import creates a new house and leaves the original folder unchanged."
     },
     {
       "title": "Share and AirDrop",

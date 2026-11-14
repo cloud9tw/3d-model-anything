@@ -1,4 +1,4 @@
-# Mac 與 iPhone 自用版操作
+# 3D Model test：Mac 與 iPhone 自用版操作
 
 本分支增加局部擷取、每房間自動照片上限、保存階段顯示與資料檢查工具。
 `personal-room-rebuild` 負責串接兩個 skill；img2threejs 在電腦上的代理工具中
@@ -23,6 +23,8 @@ git pull --ff-only
 
 確認 `origin` 指向 `cloud9tw/3d-model-anything`。這是待實機驗證的功能分支，
 不是已通過實機掃描驗收的版本。
+
+App 在 iPhone 主畫面與 App 內顯示為 **3D Model test**。若已安裝舊版，拉取更新後重新執行下方的 `xcodegen generate`，再用 Xcode 安裝到手機。
 
 ## 編譯 iPhone App
 

@@ -1,6 +1,8 @@
-# 3D Model Anything
+# 3D Model test
 
 ## Personal capture fork
+
+**3D Model test** is a personal fork of [3D Model Anything](https://github.com/wesbos/3d-model-anything).
 
 This fork adds a partial-area capture mode, a per-room automatic photo budget
 (60 by default; manual gap-filling remains available), explicit save-stage feedback,

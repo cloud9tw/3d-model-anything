@@ -2,7 +2,7 @@
 
 The 3d-model-anything repository provides a runnable viewer and iPhone app:
 
-- `apps/house-capture/`: iPhone app source (display name: 3D Model Anything).
+- `apps/house-capture/`: iPhone app source (display name: 3D Model test).
 - `apps/room-viewer/`: viewer and matched-camera capture page.
 - `packages/room-runtime/`: geometry helpers, wall builders, materials, lighting, rendering and types.
 - `packages/room-physics/`: optional interactive physics.

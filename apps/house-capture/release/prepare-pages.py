@@ -27,8 +27,8 @@ for resource, filename in [('PrivacyPolicy', 'privacy.html'), ('Support', 'suppo
     else:
         contact = '<!-- Release blocker: add the public support contact before publishing. -->'
     page = f'''<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>3D Model Anything — {html.escape(doc['title'])}</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>3D Model test — {html.escape(doc['title'])}</title>
 <style>body{{margin:0;background:#f6f3eb;color:#20211f;font:18px/1.65 system-ui,sans-serif}}main{{max-width:720px;margin:auto;padding:40px 24px}}nav{{display:flex;gap:24px;flex-wrap:wrap}}a{{color:#a63914}}h1{{font-size:clamp(32px,6vw,48px);line-height:1.15;letter-spacing:-1px}}h2{{font-size:22px;margin-top:36px}}.meta{{font:13px monospace;letter-spacing:1px;color:#62635b}}section{{border-top:1px solid #d0cabc;margin-top:28px}}footer{{margin-top:44px;font-size:14px}}a:focus-visible{{outline:3px solid #c2471f;outline-offset:4px}}</style></head>
-<body><main><nav aria-label="3D Model Anything"><a href="support.html">Help &amp; support</a><a href="privacy.html">Privacy policy</a></nav><h1>{html.escape(doc['title'])}</h1><p class="meta">3D MODEL ANYTHING · UPDATED {html.escape(doc['updated'].upper())}</p>{sections}{contact}<footer>3D Model Anything · Scan, save and share your rooms.</footer></main></body></html>'''
+<body><main><nav aria-label="3D Model test"><a href="support.html">Help &amp; support</a><a href="privacy.html">Privacy policy</a></nav><h1>{html.escape(doc['title'])}</h1><p class="meta">3D Model test · UPDATED {html.escape(doc['updated'].upper())}</p>{sections}{contact}<footer>3D Model test · Scan, save and share your rooms.</footer></main></body></html>'''
     (out / filename).write_text(page)
 print(f'Prepared {out}; verify contact and publish on your chosen HTTPS host before submission.')

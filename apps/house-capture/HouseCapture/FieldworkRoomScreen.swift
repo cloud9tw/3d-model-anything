@@ -80,7 +80,7 @@ struct FieldworkRoomScreen: View {
     .background(Fieldwork.paper).foregroundStyle(Fieldwork.ink)
     .navigationTitle("").navigationBarTitleDisplayMode(.inline)
     .toolbar {
-      ToolbarItem(placement: .principal) { FieldworkEyebrow(text: house?.name ?? "3D Model Anything") }
+      ToolbarItem(placement: .principal) { FieldworkEyebrow(text: house?.name ?? "3D Model test") }
       ToolbarItem(placement: .topBarTrailing) {
         Menu {
           Button("Rename room", systemImage: "pencil") { name = room?.name ?? ""; renaming = true }
