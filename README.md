@@ -1,5 +1,16 @@
 # 3D Model Anything
 
+## Personal capture fork
+
+This fork adds a partial-area capture mode, a per-room automatic photo budget
+(60 by default; manual gap-filling remains available), explicit save-stage feedback,
+and a read-only capture assessor. The `personal-room-rebuild` skill combines the
+measured room workflow with the independently installed public img2threejs object
+skill. It is not an automatic photogrammetry repair or a claim of device-tested
+scan recovery. [Mac/iPhone setup and reconstruction guide (繁體中文)](docs/personal-capture-mac.zh-TW.md).
+
+Original project documentation follows.
+
 [![Watch the video: 3D Model Anything](docs/images/thumb-1.png)](https://www.youtube.com/watch?v=JGQCcCzuS88)
 
 Capture a room on an iPhone, then use its geometry and photographs to build an editable Three.js scene with an AI coding agent.

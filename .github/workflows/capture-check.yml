@@ -36,7 +36,7 @@ jobs:
           xcrun simctl bootstatus "$DEVICE" -b
           xcrun simctl install "$DEVICE" "$RUNNER_TEMP/capture-build/Build/Products/Debug-iphonesimulator/HouseCapture.app"
           xcrun simctl launch --console --terminate-running-process "$DEVICE" com.wesbos.housecapture -selftest | tee "$RUNNER_TEMP/capture-selftest.log"
-          grep -q 'SELFTEST:' "$RUNNER_TEMP/capture-selftest.log"
+          grep -q 'SELFTEST: PASS ' "$RUNNER_TEMP/capture-selftest.log"
           if grep -q 'SELFTEST: FAIL' "$RUNNER_TEMP/capture-selftest.log"; then exit 1; fi
       - uses: actions/upload-artifact@v4
         if: always()

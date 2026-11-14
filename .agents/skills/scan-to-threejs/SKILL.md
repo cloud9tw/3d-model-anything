@@ -7,6 +7,11 @@ description: Rebuild editable Three.js rooms from 3D Model Anything iPhone expor
 
 Use captured geometry as measurement evidence and posed photos as visual evidence. Build editable geometry, then compare it against those inputs. Conversion produces a measured baseline; detailed reconstruction requires modeling and visual review.
 
+For partial captures, fragmented reconstructions, or a request to combine this workflow
+with img2threejs, use the sibling [personal-room-rebuild](../personal-room-rebuild/SKILL.md)
+skill. Its `assess_capture.py` input check preserves original camera indices and selects
+reference views before modeling; it does not establish alignment or certify fidelity.
+
 ## Inputs and coordinates
 
 Read [house-capture.md](references/house-capture.md) for iPhone exports. The app's display name is 3D Model Anything; existing `house-capture/*` format identifiers and file layouts remain unchanged.
