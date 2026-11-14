@@ -68,5 +68,5 @@
 
 - [x] Run complete Python suite, viewer build, public-boundary check on canonical LF files, macOS Swift policies and simulator build.
 - [x] Request one fresh whole-branch review; fix actionable issues with regression coverage.
-- [ ] Push branch to user's fork, create/attach a draft PR, verify remote head and CI outcomes.
-- [ ] Report concrete changes, checks, Mac checkout instructions, and missing physical-device evidence.
+- [x] Push branch to user's fork, create/attach a draft PR, verify remote head and CI outcomes.
+- [x] Report concrete changes, checks, Mac checkout instructions, and missing physical-device evidence.
