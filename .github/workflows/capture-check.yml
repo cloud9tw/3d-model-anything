@@ -1,0 +1,17 @@
+name: Capture checks
+on:
+  push:
+    branches: [codex/personal-capture-img2threejs]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  policies:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and run capture policies
+        run: |
+          swiftc apps/house-capture/HouseCapture/CaptureQuality.swift apps/house-capture/tests/CapturePolicyTests.swift -o "$RUNNER_TEMP/capture-policies"
+          "$RUNNER_TEMP/capture-policies"
