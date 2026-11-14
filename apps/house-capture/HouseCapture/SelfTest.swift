@@ -47,7 +47,7 @@ final class SelfTest {
     let observed = CoverageEngine.Stats(meshCovered: 0.82601947, meshArea: 20, targetsCovered: 0.1, ceilingCovered: 0, floorCovered: 0)
     expect(observed.percent == 83, "room photo detail ignores inferred hidden surfaces and ceiling penalty")
     expect(CoverageEngine.Stats(meshCovered: 1, meshArea: 0, targetsCovered: 1).percent == 0, "no observed mesh cannot report photo detail")
-    expect(!CaptureQuality(percent: 40, walls: 4, photos: 156).ready, "many photos do not hide poor observed detail")
+    expect(!CaptureQuality(percent: 40, walls: 4, photos: 156, scope: .room).ready, "many photos do not hide poor observed detail")
     expect(CaptureQuality(percent: 88, walls: 4, photos: 20).ready, "finish suggestion does not require inferred floor or ceiling coverage")
     let legacy = try JSONDecoder().decode(RoomRecord.self, from: Data(#"{"index":0,"name":"Play room","file":"room.json","usdz":"room.usdz","capturedAt":0,"walls":15,"doors":4,"windows":0,"openings":0,"objects":16,"coverage":0.82601947,"photoCoverage":53}"#.utf8))
     expect(legacy.photographedPercent == 83, "saved scans use measured coverage instead of legacy mixed percentage")

@@ -73,7 +73,9 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
   @Published var roomName = ""
   @Published private(set) var rooms: [RoomRecord] = []
   @Published private(set) var photoCount = 0
-  private let autoPhotos = true
+  @Published var captureScope: CaptureScope = .area
+  @Published var automaticPhotoLimit = 60
+  @Published private(set) var automaticPhotos = AutomaticPhotoBudget()
   @Published var highResolutionPhotos = false
   @Published private(set) var trackingIssue: TrackingRecovery.Issue? = .starting
   @Published private(set) var sessionNeedsRestart = false
@@ -175,7 +177,7 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
   private var photosInFlight = 0
   private var nextPhotoID = 0
   private var roomStartedAt: Date?
-  private var roomPhotoCount = 0
+  @Published private(set) var roomPhotoCount = 0
   private var diagnostics = Diagnostics()
   private var lastDiagnosticSample: CFTimeInterval = 0
   private var coverageProbePending = false
@@ -645,7 +647,7 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
   }
   private var memoryPressureUntil: TimeInterval = 0
   var captureBudget: CaptureBudget { CaptureBudget(thermal: ProcessInfo.processInfo.thermalState, photos: roomPhotoCount, memoryPressure: CACurrentMediaTime() < memoryPressureUntil) }
-  var quality: CaptureQuality { CaptureQuality(percent: stats.percent, walls: coverage.walls.count, photos: roomPhotoCount) }
+  var quality: CaptureQuality { CaptureQuality(percent: stats.percent, walls: coverage.walls.count, photos: roomPhotoCount, scope: captureScope) }
   var recoveryPhoto: URL? { photos.last.map { bundle.file($0.file) } }
   var reviewSource: PreviewSource? {
     guard let last = rooms.last, let session = house.session(plan.sessionID) else { return nil }
@@ -682,13 +684,15 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
     lastCoverageProgress = Date()
     lastProgressPercent = 0
     roomPhotoCount = 0
+    automaticPhotos = AutomaticPhotoBudget(limit: automaticPhotoLimit)
+    finishingStep = ""
     hint = .none
     engine.setRoom(nil)
     scanView.showRoom(nil)
     phase = .scanning
     applyGhostOpacity()
     refreshCoverage()
-    diagnostics.log("room \(roomIndex) '\(roomName)' start", since: startedAt)
+    diagnostics.log("room \(roomIndex) '\(roomName)' start: \(captureScope.rawValue), auto photo limit \(automaticPhotos.limit)", since: startedAt)
     roomSession.run(configuration: RoomCaptureSession.Configuration())
     sessionRunning = true
     UIApplication.shared.isIdleTimerDisabled = true
@@ -702,15 +706,18 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
     if paused { resume() }
     commitCandidate(allowHighResolution: false)
     phase = .finishingRoom
+    finishingStep = "Saving accepted photos…"
     scanView.feed.isOn = false // freeze accepted mesh input for the export barrier
     // export the mesh while it's all still there, then let RoomPlan wrap up (didEndWith → finish)
     let file = bundle.file("mesh/room-\(roomIndex).ply")
     Task {
       await drainPhotos()
       guard !closed, phase == .finishingRoom else { return }
+      finishingStep = "Saving the observed mesh…"
       preStopMesh = await withCheckedContinuation { c in engine.exportPLY(to: file) { c.resume(returning: $0) } }
       guard !closed, phase == .finishingRoom else { return }
       cameraControl.unlock()
+      finishingStep = "Finishing RoomPlan measurements…"
       roomSession.stop(pauseARSession: false)
     }
   }
@@ -770,6 +777,7 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
       sampleDiagnostics(force: true)
     }
     scanView.feed.isOn = false
+    finishingStep = "Saving accepted photos…"
     await drainPhotos()
     guard !closed else { return }
     let index = roomIndex
@@ -777,7 +785,11 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
     var record = RoomRecord(
       index: index, name: roomName.trimmingCharacters(in: .whitespaces), file: "rooms/room-\(index).json",
       usdz: "rooms/room-\(index).usdz", capturedAt: capturedAt, walls: 0, doors: 0, windows: 0, openings: 0, objects: 0)
+    record.captureScope = captureScope.rawValue
+    record.automaticPhotoLimit = automaticPhotos.limit
+    record.automaticPhotos = automaticPhotos.saved
     // raw capture data first: RoomBuilder can be re-run on it later even if it fails now
+    finishingStep = "Saving raw room measurements…"
     let dataFile = bundle.file("rooms/room-\(index)-data.json")
     let savedData = await Task.detached(priority: .utility) { () -> Bool in
       guard let json = try? ScanBundle.encodeRoomData(data) else { return false }
@@ -785,6 +797,7 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
     }.value
     if savedData { record.data = "rooms/room-\(index)-data.json" }
     do {
+      finishingStep = "Building the room layout…"
       let room = try await RoomBuilder(options: [.beautifyObjects]).capturedRoom(from: data)
       try bundle.saveRoom(room, index: index)
       record.walls = room.walls.count
@@ -801,6 +814,7 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
       record.usdz = ""
     }
     let meshFile = "mesh/room-\(index).ply"
+    finishingStep = "Checking the saved mesh…"
     var result = preStopMesh
     if case .success(let r)? = result, r.vertices > 0 {} else {
       result = await withCheckedContinuation { c in engine.exportPLY(to: bundle.file(meshFile)) { c.resume(returning: $0) } }
@@ -813,6 +827,7 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
     record.detailSeconds = roomStartedAt.map { Date().timeIntervalSince($0) }
     record.detailPhotos = roomPhotoCount
     rooms.append(record)
+    finishingStep = "Saving photo, depth and room indexes…"
     pendingRoomIDs[index] = selectedRoomID
     do {
       try depthRecorder.save()
@@ -836,6 +851,7 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
       lastWarning = "The scan index could not be saved: \(error.localizedDescription). Free storage and finish the session to retry."
     }
     // keep the zone's map current, so a crash later doesn't cost the whole session's alignment
+    finishingStep = "Saving the position map…"
     await saveWorldMap(final: false)
     roomName = ""
     selectedRoomID = nil
@@ -1365,7 +1381,8 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
   /// the engine estimates how much red the current view would turn green; before that,
   /// any new viewpoint counts. Either way, hold the sharpest frame of that view.
   private func autoPhoto(_ frame: ARFrame, blur: Float) {
-    guard autoPhotos, photosInFlight == 0, !highResInFlight, case .normal = frame.camera.trackingState else { return }
+    guard automaticPhotos.canReserve else { candidate = nil; return }
+    guard photosInFlight == 0, !highResInFlight, case .normal = frame.camera.trackingState else { return }
     let view = PhotoView(transform: frame.camera.transform)
     if resolveCandidate(frame: frame, view: view) { return }
     guard frame.timestamp - lastPhotoTime > captureBudget.photoInterval, blur <= Self.acceptableBlur else { return }
@@ -1407,6 +1424,7 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
   private func commitCandidate(allowHighResolution: Bool = true) {
     guard let held = candidate else { return }
     candidate = nil
+    guard automaticPhotos.canReserve else { return }
     guard held.blur <= Self.acceptableBlur else { return }
     guard !captureBudget.constrained, allowHighResolution, highResolutionPhotos, highResSupported, !highResInFlight,
           captureReady, phase == .scanning,
@@ -1472,6 +1490,9 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
     // auto photos wait their turn; manual taps always go through (within reason)
     guard !closed, phase == .scanning || phase == .finishingRoom,
           photosInFlight < (manual ? 3 : 1), !paused || manual else { return }
+    // Final admission point also covers high-resolution callbacks and finishRoom's
+    // held frame. A manual photo still obeys all existing tracking/write guards.
+    if !manual && !automaticPhotos.reserve() { return }
     photosInFlight += 1
     lastPhotoTime = shot.timestamp
 
@@ -1517,7 +1538,10 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
     Task.detached(priority: .utility) {
       let ok = Self.writeJPEG(image, to: url, context: context)
       await MainActor.run {
-        defer { self.photosInFlight -= 1 }
+        defer {
+          self.photosInFlight -= 1
+          if !manual { self.automaticPhotos.complete(saved: ok) }
+        }
         guard !self.closed else { return }
         if ok {
           self.photos.append(record)
